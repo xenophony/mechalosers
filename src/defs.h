@@ -30,7 +30,7 @@
 typedef uint32_t color_t;
 
 // TEXTURES 
-#define NUM_TEXTURES   9
+#define NUM_TEXTURES   15
 
 #define RED_BRICK      0
 #define PURPLE_STONE   1
@@ -46,5 +46,6 @@ typedef uint32_t color_t;
 #define TABLE          11
 #define GUARD          12
 #define ARMOR          13
+#define TROOPER        14
 
 #endif

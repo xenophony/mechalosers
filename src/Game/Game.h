@@ -16,6 +16,8 @@
 #include "../Systems/MouseLookSystem.h"
 #include "../Systems/RayCastingSystem.h"
 #include "../Systems/RaysRenderSystem.h"
+#include "../Systems/SpriteRenderSystem.h"
+#include "../Systems/AnimationSystem.h"
 #include "../AssetStore/AssetStore.h"
 #include <glm/glm.hpp>
 #include <vector>
@@ -30,6 +32,7 @@ private:
     int millisecsPreviousFrame = 0;
     color_t* colorBuffer = NULL;
     entt::registry registry;
+    entt::entity playerEntity;
     EventBus events;
     std::unique_ptr <AssetStore> assetStore;
     std::unique_ptr <EventBus> eventBus;
@@ -43,6 +46,8 @@ private:
     MouseLookSystem* mouseLookSystem;
     RayCastingSystem* rayCastingSystem;
     RaysRenderSystem* raysRenderSystem;
+    SpriteRenderSystem* spriteRenderSystem;
+    AnimationSystem* animationSystem;
     //...
     //...
 

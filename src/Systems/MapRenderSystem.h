@@ -72,11 +72,13 @@ public:
                     MINIMAP_SCALE_FACTOR * transform.position.y,
                     MINIMAP_SCALE_FACTOR * rays.rays[i].wallHitX,
                     MINIMAP_SCALE_FACTOR * rays.rays[i].wallHitY,
-                    0xFF0000FF
+                    0x33000055
                 );
             }
 
         }
+
+
 
     }
 

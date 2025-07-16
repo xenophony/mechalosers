@@ -2,6 +2,8 @@
 #define UTILS_H
 
 #include "../defs.h"
+#include "../Components/GridComponent.h"
+#include "../Components/SpriteComponent.h"
 #include <vector>
 #include <algorithm>
 
@@ -119,6 +121,15 @@ inline bool isInsideMap(GridComponent gridComponent, float x, float y) {
     int mapPixelHeight = numRows * TILE_SIZE;
 
     return x >= 0 && x <= mapPixelWidth && y >= 0 && y <= mapPixelHeight;
+}
+
+inline int compareSprites(const void* a, const void* b) {
+    const SpriteComponent* spriteA = (const SpriteComponent*)a;
+    const SpriteComponent* spriteB = (const SpriteComponent*)b;
+
+    if (spriteA->distance < spriteB->distance) return 1;
+    if (spriteA->distance > spriteB->distance) return -1;
+    return 0;
 }
 
 #endif

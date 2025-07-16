@@ -16,6 +16,7 @@
 #include "../Logger/Logger.h"
 #include "../Components/KeyboardControlledComponent.h"
 #include "../Components/RaysComponent.h"
+#include "../Components/SpriteComponent.h"
 
 #include <iostream>
 #include <string>
@@ -59,6 +60,8 @@ Game::Game() {
     mouseLookSystem = new MouseLookSystem();
     rayCastingSystem = new RayCastingSystem();
     raysRenderSystem = new RaysRenderSystem();
+    spriteRenderSystem = new SpriteRenderSystem();
+    animationSystem = new AnimationSystem();
     Logger::Log("Game constructor called");
 }
 
@@ -72,6 +75,7 @@ Game::~Game() {
     delete mouseLookSystem;
     delete rayCastingSystem;
     delete raysRenderSystem;
+    delete spriteRenderSystem;
 
     Logger::Log("Game destructor called");
 }
@@ -152,13 +156,26 @@ void Game::Setup() {
     Logger::Log("Textures loaded");
 
     // Create Player
-    entt::entity player = registry.create();
-    registry.emplace<TransformComponent>(player, glm::vec2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2), glm::vec2(1.0, 1.0), 0.0);
-    registry.emplace<RigidBodyComponent>(player, glm::vec2(0.0, 0.0));
-    registry.emplace<PlayerComponent>(player);
-    registry.emplace<KeyboardControlledComponent>(player);
-    registry.emplace<MousePositionComponent>(player, glm::vec2(0.0, 0.0));
-    registry.emplace<RaysComponent>(player);
+    playerEntity = registry.create();
+    registry.emplace<TransformComponent>(playerEntity, glm::vec2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2), glm::vec2(1.0, 1.0), 0.0);
+    registry.emplace<RigidBodyComponent>(playerEntity, glm::vec2(0.0, 0.0));
+    registry.emplace<PlayerComponent>(playerEntity);
+    registry.emplace<KeyboardControlledComponent>(playerEntity);
+    registry.emplace<MousePositionComponent>(playerEntity, glm::vec2(0.0, 0.0));
+    registry.emplace<RaysComponent>(playerEntity);
+
+    // Create a sample sprite entity with armor texture farther from player
+    entt::entity armorSprite = registry.create();
+    registry.emplace<TransformComponent>(armorSprite, glm::vec2(WINDOW_WIDTH / 2 + 200, WINDOW_HEIGHT / 2), glm::vec2(1.0, 1.0), 0.0);
+    registry.emplace<SpriteComponent>(armorSprite, 13); // armor texture index
+
+    entt::entity armorSprite2 = registry.create();
+    registry.emplace<TransformComponent>(armorSprite2, glm::vec2(WINDOW_WIDTH / 2 + 300, WINDOW_HEIGHT / 2), glm::vec2(1.0, 1.0), 0.0);
+    registry.emplace<SpriteComponent>(armorSprite2, 13); // armor texture index
+
+    entt::entity trooper1 = registry.create();
+    registry.emplace<TransformComponent>(trooper1, glm::vec2(200, 300), glm::vec2(1.0, 1.0), 0.0);
+    registry.emplace<SpriteComponent>(trooper1, TROOPER, true);
 
     Logger::Log("Game setup complete with entt systems");
 
@@ -256,6 +273,7 @@ void Game::Update() {
     mouseLookSystem->Update(registry, deltaTime);
     movementSystem->Update(registry, deltaTime);
     rayCastingSystem->Update(registry, deltaTime);
+    animationSystem->Update(registry, deltaTime);
 
     // eventBus->Reset();
 }
@@ -307,6 +325,7 @@ void Game::Render() {
     // renderWallProjection();
     // renderSpriteProjection();
     raysRenderSystem->Render(registry, renderer, colorBuffer, assetStore);
+    spriteRenderSystem->Render(registry, renderer, colorBuffer, assetStore, playerEntity);
     mapRenderSystem->Update(registry, renderer, colorBuffer);
 
     // renderMapGrid();
