@@ -12,7 +12,10 @@
 // #include <entt/entt.hpp>
 // #include "Systems/MapRenderSystem.h"
 // #include <glm/glm.hpp>
+#include "../Events/InputEvents.h"
 #include "../Logger/Logger.h"
+#include "../Components/KeyboardControlledComponent.h"
+#include "../Components/RaysComponent.h"
 
 #include <iostream>
 #include <string>
@@ -46,12 +49,16 @@ const std::vector<std::vector<int>> grid = {
 Game::Game() {
     isRunning = false;
     isDebug = false;
-    // assetStore = std::make_unique<AssetStore>();
-    // eventBus = std::make_unique<EventBus>();
+    assetStore = std::make_unique<AssetStore>();
+    eventBus = std::make_unique<EventBus>();
 
     // Initialize systems
     mapRenderSystem = new MapRenderSystem();
-
+    movementSystem = new MovementSystem();
+    keyboardMovementSystem = new KeyboardMovementSystem();
+    mouseLookSystem = new MouseLookSystem();
+    rayCastingSystem = new RayCastingSystem();
+    raysRenderSystem = new RaysRenderSystem();
     Logger::Log("Game constructor called");
 }
 
@@ -60,17 +67,23 @@ Game::Game() {
 Game::~Game() {
     // Clean up systems
     delete mapRenderSystem;
-
+    delete movementSystem;
+    delete keyboardMovementSystem;
+    delete mouseLookSystem;
+    delete rayCastingSystem;
+    delete raysRenderSystem;
 
     Logger::Log("Game destructor called");
 }
 
 
 void Game::Initialize() {
+    Logger::Log("Starting SDL initialization");
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "Error initializing SDL.\n");
         isRunning = false;
     }
+    Logger::Log("SDL initialized successfully");
     SDL_DisplayMode display_mode;
     SDL_GetCurrentDisplayMode(0, &display_mode);
 
@@ -88,14 +101,18 @@ void Game::Initialize() {
         fprintf(stderr, "Error creating SDL window.\n");
         isRunning = false;
     }
-    renderer = SDL_CreateRenderer(window, -1, 0);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
         fprintf(stderr, "Error creating SDL renderer.\n");
         isRunning = false;
     }
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    colorBuffer = (color_t*)malloc(sizeof(color_t) * (color_t)WINDOW_WIDTH * (color_t)WINDOW_HEIGHT);
+    Logger::Log("Allocating color buffer");
+    colorBuffer = (color_t*)malloc(sizeof(color_t) * WINDOW_WIDTH * WINDOW_HEIGHT);
+    Logger::Log("Color buffer allocated successfully");
 
     colorBufferTexture = SDL_CreateTexture(
         renderer,
@@ -105,6 +122,7 @@ void Game::Initialize() {
         WINDOW_HEIGHT
     );
 
+    Logger::Log("Initialize method completed successfully");
     isRunning = true;
 }
 
@@ -121,6 +139,7 @@ void Game::Initialize() {
 // }
 
 void Game::Setup() {
+    Logger::Log("Starting Setup()");
     // Create a simplified level loader setup for testing the entt migration
     // LevelLoader loader;
     // lua.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os);
@@ -128,16 +147,30 @@ void Game::Setup() {
         // Create an entity and add the grid component
     entt::entity map = registry.create();
     registry.emplace<GridComponent>(map, grid);
+    Logger::Log("Grid component added");
+    assetStore->loadTextures();
+    Logger::Log("Textures loaded");
 
     // Create Player
     entt::entity player = registry.create();
     registry.emplace<TransformComponent>(player, glm::vec2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2), glm::vec2(1.0, 1.0), 0.0);
+    registry.emplace<RigidBodyComponent>(player, glm::vec2(0.0, 0.0));
     registry.emplace<PlayerComponent>(player);
+    registry.emplace<KeyboardControlledComponent>(player);
+    registry.emplace<MousePositionComponent>(player, glm::vec2(0.0, 0.0));
+    registry.emplace<RaysComponent>(player);
+
     Logger::Log("Game setup complete with entt systems");
+
+    keyboardMovementSystem->SubscribeToEvents(eventBus);
+
+
 }
 
 void Game::Run() {
+    Logger::Log("Starting Game::Run()");
     Setup();
+    Logger::Log("Setup completed, entering main loop");
     while (isRunning) {
         ProcessInput();
         Update();
@@ -154,6 +187,10 @@ void Game::ProcessInput() {
             exit(0);
             break;
         case SDL_KEYDOWN:
+            if (event.type == SDL_KEYDOWN) {
+                SDL_Keycode key = event.key.keysym.sym;
+                eventBus->Emit<KeyPressedEvent>(KeyPressedEvent{ key });
+            }
             if (event.key.keysym.sym == SDLK_ESCAPE) {
                 // Handle escape key
                 exit(0);
@@ -194,21 +231,33 @@ void Game::ProcessInput() {
 
 }
 void Game::Update() {
-    int timeToWait = MILLISECS_PER_FRAME - (SDL_GetTicks() - millisecsPreviousFrame);
-    if (timeToWait > 0 && timeToWait <= MILLISECS_PER_FRAME) {
+    // More precise frame timing
+    static Uint32 lastFrameTime = SDL_GetTicks();
+    Uint32 currentTime = SDL_GetTicks();
+
+    // Calculate delta time in seconds with better precision
+    double deltaTime = (currentTime - lastFrameTime) / 1000.0;
+    lastFrameTime = currentTime;
+
+    // Cap delta time to prevent large jumps (e.g., when debugging or alt-tabbing)
+    if (deltaTime > 0.05) { // Cap at 50ms (20 FPS minimum)
+        deltaTime = 0.05;
+    }
+
+    // Optional: Target 30 FPS with smoother frame pacing
+    int timeToWait = FRAME_TIME_LENGTH - (currentTime - millisecsPreviousFrame);
+    if (timeToWait > 0 && timeToWait <= FRAME_TIME_LENGTH) {
         SDL_Delay(timeToWait);
     }
 
-    double deltaTime = (SDL_GetTicks() - millisecsPreviousFrame) / 1000.0f;
-    millisecsPreviousFrame = SDL_GetTicks();
+    millisecsPreviousFrame = currentTime;
+
+    keyboardMovementSystem->Update(registry, deltaTime);
+    mouseLookSystem->Update(registry, deltaTime);
+    movementSystem->Update(registry, deltaTime);
+    rayCastingSystem->Update(registry, deltaTime);
 
     // eventBus->Reset();
-
-    // Subscribe systems to events
-
-
-    // Update systems with entt registry
-
 }
 
 void Game::ClearColorBuffer(color_t color) {
@@ -257,6 +306,7 @@ void Game::Render() {
 
     // renderWallProjection();
     // renderSpriteProjection();
+    raysRenderSystem->Render(registry, renderer, colorBuffer, assetStore);
     mapRenderSystem->Update(registry, renderer, colorBuffer);
 
     // renderMapGrid();

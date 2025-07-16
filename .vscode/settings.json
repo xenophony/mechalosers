@@ -38,8 +38,18 @@
   "C_Cpp_Runner.compilerArgs": [],
   "C_Cpp_Runner.linkerArgs": [],
   "C_Cpp_Runner.includePaths": [],
-  "C_Cpp_Runner.includeSearch": ["*", "**/*"],
-  "C_Cpp_Runner.excludeSearch": ["**/build", "**/build/**", "**/.*", "**/.*/**", "**/.vscode", "**/.vscode/**"],
+  "C_Cpp_Runner.includeSearch": [
+    "*",
+    "**/*"
+  ],
+  "C_Cpp_Runner.excludeSearch": [
+    "**/build",
+    "**/build/**",
+    "**/.*",
+    "**/.*/**",
+    "**/.vscode",
+    "**/.vscode/**"
+  ],
   "C_Cpp_Runner.useAddressSanitizer": false,
   "C_Cpp_Runner.useUndefinedSanitizer": false,
   "C_Cpp_Runner.useLeakSanitizer": false,
@@ -89,6 +99,11 @@
     "typeinfo": "cpp",
     "variant": "cpp",
     "algorithm": "cpp",
-    "vector": "cpp"
+    "vector": "cpp",
+    "optional": "cpp",
+    "__split_buffer": "cpp",
+    "array": "cpp",
+    "__tree": "cpp",
+    "map": "cpp"
   }
 }

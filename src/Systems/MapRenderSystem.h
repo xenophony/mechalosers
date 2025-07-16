@@ -7,6 +7,7 @@
 #include <vector>
 #include "../Components/GridComponent.h"
 #include "../Components/PlayerComponent.h"
+#include "../Components/RaysComponent.h"
 #include <SDL2/SDL.h>
 #include "../defs.h"
 #include "../Utils/Utils.h"
@@ -52,6 +53,29 @@ public:
                 5 * MINIMAP_SCALE_FACTOR,
                 0xFFFFFFFF
             );
+        }
+
+
+
+        // SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        auto entities = registry.view<RaysComponent, TransformComponent>();
+
+        for (auto player : entities)
+        {
+            const auto& rays = entities.get<RaysComponent>(player);
+            const auto& transform = entities.get<TransformComponent>(player);
+
+            for (int i = 0; i < rays.rays.size(); i++) {
+                drawLine(
+                    colorBuffer,
+                    MINIMAP_SCALE_FACTOR * transform.position.x,
+                    MINIMAP_SCALE_FACTOR * transform.position.y,
+                    MINIMAP_SCALE_FACTOR * rays.rays[i].wallHitX,
+                    MINIMAP_SCALE_FACTOR * rays.rays[i].wallHitY,
+                    0xFF0000FF
+                );
+            }
+
         }
 
     }

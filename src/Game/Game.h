@@ -7,14 +7,19 @@
 #include "../Components/RigidBodyComponent.h"
 #include "../Components/PlayerComponent.h"
 #include "../Components/TransformComponent.h"
+#include "../Components/MousePositionComponent.h"
 #include "../Logger/Logger.h"
+#include "../EventBus/EventBus.h"
 #include <entt/entt.hpp>
 #include "../Systems/MapRenderSystem.h"
+#include "../Systems/MovementSystem.h"
+#include "../Systems/MouseLookSystem.h"
+#include "../Systems/RayCastingSystem.h"
+#include "../Systems/RaysRenderSystem.h"
+#include "../AssetStore/AssetStore.h"
 #include <glm/glm.hpp>
 #include <vector>
-
-const int FPS = 60;
-const int MILLISECS_PER_FRAME = 1000 / FPS;
+#include "../Systems/KeyboardMovementSystem.h"
 
 class Game {
 private:
@@ -25,13 +30,19 @@ private:
     int millisecsPreviousFrame = 0;
     color_t* colorBuffer = NULL;
     entt::registry registry;
-    // std::unique_ptr <AssetStore> assetStore;
-    // std::unique_ptr <EventBus> eventBus;
+    EventBus events;
+    std::unique_ptr <AssetStore> assetStore;
+    std::unique_ptr <EventBus> eventBus;
     SDL_Texture* colorBufferTexture;
     // sol::state lua;
 
     // EnTT-based systems
-    class MapRenderSystem* mapRenderSystem;
+    MapRenderSystem* mapRenderSystem;
+    KeyboardMovementSystem* keyboardMovementSystem;
+    MovementSystem* movementSystem;
+    MouseLookSystem* mouseLookSystem;
+    RayCastingSystem* rayCastingSystem;
+    RaysRenderSystem* raysRenderSystem;
     //...
     //...
 

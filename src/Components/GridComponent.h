@@ -7,6 +7,7 @@
 struct GridComponent {
     std::vector<std::vector<int>> grid;
 
+    GridComponent() {}
     GridComponent(std::vector<std::vector<int>> grid) {
         this->grid = grid;
     }

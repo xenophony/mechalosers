@@ -8,21 +8,16 @@
 #define WINDOW_HEIGHT 800
 
 #define FOV_ANGLE (60 * (PI / 180))
-// Ray optimization settings
-#define RAY_WIDTH 2  // Each ray covers this many screen columns (higher = better performance, lower quality)
-#define NUM_RAYS (WINDOW_WIDTH / RAY_WIDTH)
+#define NUM_RAYS WINDOW_WIDTH
 
 #define TILE_SIZE 64
-
-#define MAP_NUM_ROWS 13
-#define MAP_NUM_COLS 20
 
 #define DIST_PROJ_PLANE  ((WINDOW_WIDTH / 2) / tan(FOV_ANGLE / 2))
 
 #define MINIMAP_SCALE_FACTOR 0.2
 
 #define FPS 30
-#define FRAME_TIME_LENGTH (1000 / FPS)
+#define FRAME_TIME_LENGTH (1000/ FPS)
 
 #define PI 3.14159265
 #define TWO_PI 6.28318530
@@ -30,7 +25,6 @@
 typedef uint32_t color_t;
 
 // TEXTURES 
-#define NUM_TEXTURES   9
 
 #define RED_BRICK      0
 #define PURPLE_STONE   1
