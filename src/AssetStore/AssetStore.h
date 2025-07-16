@@ -4,11 +4,19 @@
 #include <map>
 #include <string>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include "../defs.h"
 #include <stdint.h>
-#include "../../libs/upng/upng.h"
 #include <vector>
+
+struct TextureData {
+    int width;
+    int height;
+    color_t* pixels;
+    SDL_Surface* surface; // Keep reference for cleanup
+    bool ownPixels; // Flag to track if we allocated pixels ourselves
+};
 
 class AssetStore {
 private:
@@ -17,13 +25,11 @@ private:
     // std::map<std::string, TTF_Font*> fonts;
     // TODO: map for fonts and audio
 public:
-    std::vector<upng_t*> textures;
+    std::vector<TextureData> textures;
     AssetStore();
     ~AssetStore();
 
     // void ClearAssets();
-
-
 
     void loadTextures();
     void freeTextures();

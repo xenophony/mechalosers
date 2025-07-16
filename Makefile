@@ -8,8 +8,7 @@ INCLUDE_PATH = -I./libs -I/usr/local/include -I/opt/homebrew/include
 SRC_FILES = ./src/*.cpp \
             ./src/Game/*.cpp \
             ./src/Logger/*.cpp \
-            ./src/AssetStore/*.cpp \
-            ./libs/upng/*.c
+            ./src/AssetStore/*.cpp
 
 LINKER_FLAGS = `sdl2-config --libs --cflags` \
                 -lSDL2_image \

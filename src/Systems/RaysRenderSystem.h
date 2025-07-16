@@ -12,7 +12,6 @@
 #include <SDL2/SDL.h>
 #include "../defs.h"
 #include "../Utils/Utils.h"
-#include "../../libs/upng/upng.h"
 #include "../AssetStore/AssetStore.h"
 
 class RaysRenderSystem {
@@ -28,7 +27,7 @@ public:
     }
 
     void Render(entt::registry& registry, SDL_Renderer* renderer, color_t* colorBuffer, std::unique_ptr <AssetStore>& assetStore) {
-        std::vector<upng_t*> textures = assetStore->textures;
+        std::vector<TextureData>& textures = assetStore->textures;
 
         auto view = registry.view<RaysComponent, TransformComponent>();
 
@@ -47,9 +46,11 @@ public:
                 wallBottomY = wallBottomY > WINDOW_HEIGHT ? WINDOW_HEIGHT : wallBottomY;
 
                 int texNum = rays.rays[rayIndex].texture - 1;
-                int texHeight = upng_get_height(textures[texNum]);
-                int texWidth = upng_get_width(textures[texNum]);
-                color_t* wallTextureBuffer = (color_t*)upng_get_buffer(textures[texNum]);
+                if (texNum < 0 || texNum >= textures.size()) continue; // Safety check
+
+                int texHeight = textures[texNum].height;
+                int texWidth = textures[texNum].width;
+                color_t* wallTextureBuffer = textures[texNum].pixels;
 
                 // Calculate texture X coordinate for this ray
                 // Use consistent texture coordinate across the entire ray strip

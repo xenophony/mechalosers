@@ -38,14 +38,6 @@ public:
         // Get current keyboard state
         const Uint8* keystate = SDL_GetKeyboardState(NULL);
 
-        // Get the map component to determine dynamic boundaries
-        GridComponent* mapComponent = nullptr;
-        auto mapView = registry.view<GridComponent>();
-        for (auto mapEntity : mapView) {
-            mapComponent = &mapView.get<GridComponent>(mapEntity);
-            break; // Get the first (and presumably only) map component
-        }
-
         // Get all entities that have KeyboardControlledComponent and RigidBodyComponent
         auto view = registry.view<KeyboardControlledComponent, RigidBodyComponent, TransformComponent>();
 
@@ -84,45 +76,9 @@ public:
                 inputDirection.x /= magnitude;
                 inputDirection.y /= magnitude;
 
-                // Apply direct movement (frame-rate independent)
+                // Set velocity - let MovementSystem handle position updates and collision detection
                 rigidBody.velocity.x = inputDirection.x * playerSpeed;
                 rigidBody.velocity.y = inputDirection.y * playerSpeed;
-            }
-
-            // Apply dynamic boundary checking based on actual map dimensions
-            if (mapComponent && !mapComponent->grid.empty()) {
-                // Calculate dynamic map boundaries from actual grid data
-                const float MAP_HEIGHT = mapComponent->grid.size() * TILE_SIZE;
-                const float MAP_WIDTH = mapComponent->grid[0].size() * TILE_SIZE;
-                const float BOUNDARY_MARGIN = 32.0f; // Keep entities at least 32 units from map edge
-
-                // Calculate potential new position
-                glm::vec2 newPosition = transform.position + rigidBody.velocity * (float)deltaTime;
-
-                // Clamp position to dynamic map boundaries
-                if (newPosition.x < BOUNDARY_MARGIN) {
-                    newPosition.x = BOUNDARY_MARGIN;
-                    rigidBody.velocity.x = 0; // Stop horizontal movement
-                }
-                if (newPosition.x > MAP_WIDTH - BOUNDARY_MARGIN) {
-                    newPosition.x = MAP_WIDTH - BOUNDARY_MARGIN;
-                    rigidBody.velocity.x = 0; // Stop horizontal movement
-                }
-                if (newPosition.y < BOUNDARY_MARGIN) {
-                    newPosition.y = BOUNDARY_MARGIN;
-                    rigidBody.velocity.y = 0; // Stop vertical movement
-                }
-                if (newPosition.y > MAP_HEIGHT - BOUNDARY_MARGIN) {
-                    newPosition.y = MAP_HEIGHT - BOUNDARY_MARGIN;
-                    rigidBody.velocity.y = 0; // Stop vertical movement
-                }
-
-                // Update transform position with clamped values
-                transform.position = newPosition;
-            } else {
-                // Fallback: If no map component found, just apply velocity without boundaries
-                Logger::Log("Warning: No map component found for boundary checking");
-                transform.position += rigidBody.velocity * (float)deltaTime;
             }
         }
     }

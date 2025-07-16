@@ -32,30 +32,89 @@ AssetStore::~AssetStore() {
 }
 
 void AssetStore::loadTextures() {
-    for (int i = 0; i < NUM_TEXTURES; i++) {
-        upng_t* upng;
+    // Initialize SDL_image if not already done
+    int imgFlags = IMG_INIT_PNG;
+    if (!(IMG_Init(imgFlags) & imgFlags)) {
+        Logger::Log("SDL_image could not initialize! SDL_image Error: " + std::string(IMG_GetError()));
+        return;
+    }
 
-        upng = upng_new_from_file(textureFileNames[i].c_str());
-        if (upng != NULL) {
-            upng_decode(upng);
-            if (upng_get_error(upng) == UPNG_EOK) {
-                textures[i] = upng;
-                // textures[i].width = upng_get_width(upng);
-                // textures[i].height= upng_get_width(upng);
-                // textures[i].texture_buffer= (color_t*) upng_get_buffer(upng);
-            } else if (upng_get_error(upng) == UPNG_ENOTFOUND)
-            {
-                fprintf(stderr, "cannot find file name: %s\n", textureFileNames[i].c_str());
-            }
+    for (int i = 0; i < NUM_TEXTURES; i++) {
+        // Load image as SDL_Surface
+        SDL_Surface* loadedSurface = IMG_Load(textureFileNames[i].c_str());
+        if (loadedSurface == nullptr) {
+            Logger::Log("Unable to load image " + textureFileNames[i] + "! SDL_image Error: " + std::string(IMG_GetError()));
+            continue;
         }
+
+        // Convert surface to ARGB8888 format for consistent pixel access
+        SDL_Surface* formattedSurface = SDL_ConvertSurfaceFormat(loadedSurface, SDL_PIXELFORMAT_ARGB8888, 0);
+        SDL_FreeSurface(loadedSurface); // Free the original surface
+
+        if (formattedSurface == nullptr) {
+            Logger::Log("Unable to convert surface format for " + textureFileNames[i] + "! SDL Error: " + std::string(SDL_GetError()));
+            continue;
+        }
+
+        // Check if we can use direct pixel access (optimization)
+        bool canUseDirect = (formattedSurface->format->format == SDL_PIXELFORMAT_RGBA8888);
+
+        color_t* pixelBuffer;
+        bool ownPixels = false;
+
+        if (canUseDirect && formattedSurface->format->Rmask == 0xFF000000) {
+            // Direct access - format matches our expectation (ARGB)
+            Logger::Log("Using direct pixel access for " + textureFileNames[i]);
+            pixelBuffer = (color_t*)formattedSurface->pixels;
+        } else {
+            // Manual conversion needed
+            Logger::Log("Converting pixel format for " + textureFileNames[i]);
+            int pixelCount = formattedSurface->w * formattedSurface->h;
+            pixelBuffer = new color_t[pixelCount];
+            ownPixels = true;
+
+            SDL_LockSurface(formattedSurface);
+            Uint32* sdlPixels = (Uint32*)formattedSurface->pixels;
+
+            for (int p = 0; p < pixelCount; p++) {
+                Uint32 pixel = sdlPixels[p];
+                Uint8 r, g, b, a;
+                SDL_GetRGBA(pixel, formattedSurface->format, &r, &g, &b, &a);
+
+                // Convert to our color format: 0xAARRGGBB - swap R and B to fix blue tint
+                pixelBuffer[p] = (a << 24) | (b << 16) | (g << 8) | r;
+            }
+
+            SDL_UnlockSurface(formattedSurface);
+        }
+
+        // Store texture data
+        TextureData textureData;
+        textureData.width = formattedSurface->w;
+        textureData.height = formattedSurface->h;
+        textureData.pixels = pixelBuffer;
+        textureData.surface = formattedSurface; // Keep reference for cleanup
+        textureData.ownPixels = ownPixels;
+
+        textures[i] = textureData;
+
+        Logger::Log("Loaded texture: " + textureFileNames[i] + " (" +
+            std::to_string(textureData.width) + "x" + std::to_string(textureData.height) + ")");
     }
 }
 
 void AssetStore::freeTextures() {
     for (int i = 0; i < NUM_TEXTURES; i++) {
-        upng_free(textures[i]);
-        // wallTextures[i].texture_buffer;
+        if (textures[i].surface != nullptr) {
+            SDL_FreeSurface(textures[i].surface);
+            textures[i].surface = nullptr;
+        }
+        if (textures[i].ownPixels && textures[i].pixels != nullptr) {
+            delete[] textures[i].pixels;
+            textures[i].pixels = nullptr;
+        }
     }
+    IMG_Quit(); // Clean up SDL_image
 }
 
 // void AssetStore::ClearAssets()
