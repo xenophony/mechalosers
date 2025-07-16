@@ -58,7 +58,7 @@ class RayCastingSystem {
         // Increment xstep and ystep until we find a wall (with max iterations to prevent infinite loops)
         int maxIterations = 100;
         int iterations = 0;
-        while (isInsideMap(nextHorzTouchX, nextHorzTouchY) && iterations < maxIterations) {
+        while (isInsideMap(map, nextHorzTouchX, nextHorzTouchY) && iterations < maxIterations) {
             iterations++;
             float xToCheck = nextHorzTouchX;
             float yToCheck = nextHorzTouchY + (isRayFacingUp(rayAngle) ? -1 : 0);
@@ -105,7 +105,7 @@ class RayCastingSystem {
         // Increment xstep and ystep until we find a wall (with max iterations to prevent infinite loops)
         maxIterations = 100;
         iterations = 0;
-        while (isInsideMap(nextVertTouchX, nextVertTouchY) && iterations < maxIterations) {
+        while (isInsideMap(map, nextVertTouchX, nextVertTouchY) && iterations < maxIterations) {
             iterations++;
             float xToCheck = nextVertTouchX + (isRayFacingLeft(rayAngle) ? -1 : 0);
             float yToCheck = nextVertTouchY;

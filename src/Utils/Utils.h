@@ -62,11 +62,15 @@ inline float distanceBetweenPoints(float x1, float y1, float x2, float y2) {
 
 inline bool mapHasWallAt(GridComponent gridComponent, float x, float y) {
     std::vector<std::vector<int>> map = gridComponent.grid;
-    int numCols = map.size();
-    if (numCols == 0) return true;
-    int numRows = map[0].size();
+    int numRows = map.size();
+    if (numRows == 0) return true;
+    int numCols = map[0].size();
 
-    if (x < 0 || x >= MAP_NUM_COLS * TILE_SIZE || y < 0 || y >= MAP_NUM_ROWS * TILE_SIZE) {
+    // Use dynamic map dimensions from the actual grid data
+    int mapPixelWidth = numCols * TILE_SIZE;
+    int mapPixelHeight = numRows * TILE_SIZE;
+
+    if (x < 0 || x >= mapPixelWidth || y < 0 || y >= mapPixelHeight) {
         return true;
     }
 
@@ -74,7 +78,7 @@ inline bool mapHasWallAt(GridComponent gridComponent, float x, float y) {
     int mapGridIndexY = floor(y / TILE_SIZE);
 
     // Double-check bounds for array access
-    if (mapGridIndexY < 0 || mapGridIndexY >= numCols || mapGridIndexX < 0 || mapGridIndexX >= numRows) {
+    if (mapGridIndexY < 0 || mapGridIndexY >= numRows || mapGridIndexX < 0 || mapGridIndexX >= numCols) {
         return true;
     }
 
@@ -104,8 +108,17 @@ inline bool isRayFacingLeft(float angle) {
     return !isRayFacingRight(angle);
 }
 
-inline bool isInsideMap(float x, float y) {
-    return x >= 0 && x <= MAP_NUM_COLS * TILE_SIZE && y >= 0 && y <= MAP_NUM_ROWS * TILE_SIZE;
+inline bool isInsideMap(GridComponent gridComponent, float x, float y) {
+    std::vector<std::vector<int>> map = gridComponent.grid;
+    int numRows = map.size();
+    if (numRows == 0) return false;
+    int numCols = map[0].size();
+
+    // Use dynamic map dimensions from the actual grid data
+    int mapPixelWidth = numCols * TILE_SIZE;
+    int mapPixelHeight = numRows * TILE_SIZE;
+
+    return x >= 0 && x <= mapPixelWidth && y >= 0 && y <= mapPixelHeight;
 }
 
 #endif
